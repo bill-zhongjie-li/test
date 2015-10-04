@@ -1,42 +1,8 @@
 class Inventory
   def self.import(file_path)
     file = File.read(file_path)
-    data = JSON.parse(file)
-
-    data.each do |item|
-      type = item.delete("type")
-      title = item.delete("title")
-      price = item.delete("price")
-      author = item.delete("author") || item.delete("director")
-      year = item.delete("year")
-
-      if type == "book"
-        chapters = item.delete("chapters")
-        book = Book.create(title: title,
-                           price: price,
-                           author: author,
-                           year: year,
-                           extra_info: item)
-
-        chapters.each { |chapter| book.chapters.create(name: chapter) }
-
-      elsif type == "cd"
-        tracks = item.delete("tracks")
-        cd = Cd.create(title: title,
-                       price: price,
-                       author: author,
-                       year: year,
-                       extra_info: item)
-
-        tracks.each { |track| cd.tracks.create(name: track["name"],
-                                               seconds: track["seconds"]) }
-      elsif type == "dvd"
-        Dvd.create(title: title,
-                   price: price,
-                   author: author,
-                   year: year,
-                   extra_info: item)
-      end
+    JSON.parse(file).each do |item|
+      import_from_hash(item.deep_symbolize_keys)
     end
   end
 
@@ -45,20 +11,20 @@ class Inventory
   end
 
   def self.most_expensive_books
-    Book.order(:price)
-      .last(5)
+    Book.order('price DESC')
+      .limit(5)
       .to_a
   end
 
   def self.most_expensive_cds
-    Cd.order(:price)
-      .last(5)
+    Cd.order('price DESC')
+      .limit(5)
       .to_a
   end
 
   def self.most_expensive_dvds
-    Dvd.order(:price)
-      .last(5)
+    Dvd.order('price DESC')
+      .limit(5)
       .to_a
   end
 
@@ -81,5 +47,43 @@ class Inventory
     ids = (ids_from_chapters + ids_from_tracks + ids_from_title).uniq
 
     Item.where(id: ids).to_a
+  end
+
+  private
+
+  def self.import_from_hash(item)
+    type = item.delete(:type)
+    title = item.delete(:title)
+    price = item.delete(:price)
+    author = item.delete(:author) || item.delete(:director)
+    year = item.delete(:year)
+
+    if type == "book"
+      chapters = item.delete(:chapters)
+      book = Book.create(title: title,
+                         price: price,
+                         author: author,
+                         year: year,
+                         extra_info: item)
+
+      chapters.each { |chapter| book.chapters.create(name: chapter) }
+
+    elsif type == "cd"
+      tracks = item.delete(:tracks)
+      cd = Cd.create(title: title,
+                     price: price,
+                     author: author,
+                     year: year,
+                     extra_info: item)
+
+      tracks.each { |track| cd.tracks.create(name: track[:name],
+                                             seconds: track[:seconds]) }
+    elsif type == "dvd"
+      Dvd.create(title: title,
+                 price: price,
+                 author: author,
+                 year: year,
+                 extra_info: item)
+    end
   end
 end
