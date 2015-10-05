@@ -147,7 +147,7 @@ describe Inventory do
     ]}
 
     before do
-      data.each { |item| Inventory.import_from_hash(item) }
+      data.each { |item| Inventory.add_item(item) }
     end
 
     specify { Item.count.should eq 3 }

@@ -1,8 +1,10 @@
 class Inventory
   def self.import(file_path)
     file = File.read(file_path)
-    JSON.parse(file).each do |item|
-      import_from_hash(item.deep_symbolize_keys)
+    data = JSON.parse(file)
+
+    data.each do |item|
+      add_item(item.deep_symbolize_keys)
     end
   end
 
@@ -51,7 +53,7 @@ class Inventory
 
   private
 
-  def self.import_from_hash(item)
+  def self.add_item(item)
     type = item.delete(:type)
     title = item.delete(:title)
     price = item.delete(:price)
